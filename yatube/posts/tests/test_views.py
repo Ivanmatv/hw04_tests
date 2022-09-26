@@ -101,7 +101,7 @@ class PostPagesTests(TestCase):
                 form_field = response.context['form'].fields[value]
                 self.assertIsInstance(form_field, expected)
 
-    def test_add_tests_post():
+    def test_add_tests_post(self):
         response_index = self.authorized_client.get(reverse('posts:index'))
         response_group = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test-slug'})
