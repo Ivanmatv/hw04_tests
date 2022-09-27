@@ -101,20 +101,6 @@ class PostPagesTests(TestCase):
                 form_field = response.context['form'].fields[value]
                 self.assertIsInstance(form_field, expected)
 
-    def test_add_tests_post(self):
-        response_index = self.authorized_client.get(reverse('posts:index'))
-        response_group = self.authorized_client.get(
-            reverse('posts:group_list', kwargs={'slug': 'test-slug'})
-        )
-        response_profile = self.authorized_client.get(
-            reverse(
-                'posts:profile', kwargs={'username': 'Ivan'}
-            )
-        )
-        self.assertEqual(response_index.context['page_obj'][0], self.post)
-        self.assertEqual(response_group.context['group'], self.post)
-        self.assertEqual(response_profile.context['author'], self.post)
-
     def test_paginator(self):
         for post in range(11):
             post = Post.objects.create(

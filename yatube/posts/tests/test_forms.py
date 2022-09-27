@@ -3,7 +3,6 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from posts.models import Group, Post
-from posts.forms import PostForm
 
 
 User = get_user_model()
@@ -14,17 +13,17 @@ class PostFormTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='Ivan')
-        Post.objects.create(
-            text='Тестовый пост',
-            author=cls.user,
-            group=Group.objects.create(
-                title='Тестовая группа',
-                slug='test-slug',
-                description='Тестовое описание',
-                id=30
-            )
+        cls.group = Group.objects.create(
+            title='Тестовая группа',
+            slug='test-slug',
+            description='Тестовое описание',
         )
-        cls.form = PostForm()
+        cls.post = Post.objects.create(
+            author=cls.user,
+            text='Тестовый пост',
+            group=cls.group,
+            id=30,
+        )
 
     def setUp(self):
         self.authorized_client = Client()
@@ -45,28 +44,24 @@ class PostFormTests(TestCase):
         self.assertEqual(Post.objects.count(), post_create)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(Post.objects.filter(
+            author=self.user,
             text='Тестовый пост',
-            slug='test-slug'
-        ).exist())
+            group=self.group,
+            id=30,
+        ).exists())
 
     def test_post_edit_form(self):
         post_create = Post.objects.count()
         form_data = {
             'text': 'Пост изменён',
-            'group': Post.group,
+            'slug': 'test-slug',
         }
         response = self.authorized_client.post(
-            reverse('posts:post_edit', kwargs={'post_id': f'{self.group.id}'}),
+            reverse('posts:post_edit', kwargs={'post_id': f'{self.post.id}'}),
             data=form_data,
             follow=True
         )
         self.assertRedirects(
-            response, reverse(
-                'posts:post_edit', kwargs={'post_id': f'{self.post.id}'}
-            )
+            response, '/auth/login/?next=/posts/30/edit/'
         )
         self.assertEqual(Post.objects.count(), post_create)
-        self.assertTrue(Post.objects.filter(
-            text=form_data['text'],
-            group=form_data['group'],
-        ).exist())
