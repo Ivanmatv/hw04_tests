@@ -6,14 +6,17 @@ from django.contrib.auth.decorators import login_required
 from .forms import PostForm
 from .models import Post, Group, User
 
-NUM_PUB: int = 10
+
+def paginator(request, lists):
+    NUM_PUB: int = 10
+    paginator = Paginator(lists, NUM_PUB)
+    page_number = request.GET.get('page')
+    return paginator.get_page(page_number)
 
 
 def index(request):
     post_list = Post.objects.all()
-    paginator = Paginator(post_list, NUM_PUB)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(request, post_list)
     context = {
         'page_obj': page_obj,
     }
@@ -24,12 +27,9 @@ def group_posts(request, slug):
     template = 'posts/group_list.html'
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.all()
-    paginator = Paginator(posts, NUM_PUB)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    page_obj = paginator(request, posts)
     context = {
         'group': group,
-        'posts': posts,
         'page_obj': page_obj,
     }
     return render(request, template, context)
@@ -38,14 +38,8 @@ def group_posts(request, slug):
 def profile(request, username):
     author = get_object_or_404(User, username=username)
     user_posts = Post.objects.filter(author=author)
-    post_count = user_posts.count()
-    paginator = Paginator(user_posts, NUM_PUB)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    title = f'Профаил пользователя {username}'
+    page_obj = paginator(request, user_posts)
     context = {
-        'title': title,
-        'post_count': post_count,
         'author': author,
         'page_obj': page_obj,
         'username': username,
@@ -57,9 +51,8 @@ def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
     author_post = post.author
     post_count = Post.objects.filter(author=author_post).count()
-    title = f'Пост {post.text[0:30]}'
+    title = f'Пост {post.text}'
     context = {
-        'post': post,
         'post_count': post_count,
         'title': title,
         'author_post': author_post,
@@ -74,7 +67,7 @@ def post_create(request):
         form = form.save(commit=False)
         form.author = request.user
         form.save()
-        return redirect(f'/profile/{form.author.username}/')
+        return redirect('posts:profile', request.user)
     return render(request, 'posts/create_post.html', {'form': form})
 
 
