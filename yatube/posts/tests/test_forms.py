@@ -22,7 +22,7 @@ class PostFormTests(TestCase):
             author=cls.user,
             text='Тестовый пост',
             group=cls.group,
-            id=30,
+            id=30
         )
 
     def setUp(self):

@@ -53,6 +53,7 @@ def post_detail(request, post_id):
     post_count = Post.objects.filter(author=author_post).count()
     title = f'Пост {post.text}'
     context = {
+        'post': post,
         'post_count': post_count,
         'title': title,
         'author_post': author_post,
