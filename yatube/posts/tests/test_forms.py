@@ -64,8 +64,7 @@ class PostFormTests(TestCase):
             'slug': 'test-slug',
         }
         response = self.authorized_client.post(reverse(
-            'posts:post_edit', kwargs={'post_id': f'{PostFormTests.post.pk}'}
-            ),
+            'posts:post_edit', kwargs={'post_id': f'{PostFormTests.post.pk}'}),
             data=form_data,
             follow=True
         )
