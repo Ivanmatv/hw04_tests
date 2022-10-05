@@ -1,10 +1,8 @@
-from django.contrib.auth import get_user_model
 from django.test import TestCase, Client
+from django.urls import reverse
 from http import HTTPStatus
 
-from posts.models import Group, Post
-
-User = get_user_model()
+from posts.models import Group, Post, User
 
 
 class PostURLTests(TestCase):
@@ -34,11 +32,11 @@ class PostURLTests(TestCase):
     def test_urls_exist_at_desired_locations(self):
         """Страницы доступны по указанным адресам для всех пользователей."""
         url_response_status_code = {
-            '': HTTPStatus.OK.value,
-            '/group/test-slug/': HTTPStatus.OK.value,
-            '/profile/Ivan/': HTTPStatus.OK.value,
-            f'/posts/{self.post.pk}/': HTTPStatus.OK.value,
-            '/unexisting_page/': HTTPStatus.NOT_FOUND.value,
+            '': HTTPStatus.OK,
+            '/group/test-slug/': HTTPStatus.OK,
+            '/profile/Ivan/': HTTPStatus.OK,
+            f'/posts/{self.post.pk}/': HTTPStatus.OK,
+            '/unexisting_page/': HTTPStatus.NOT_FOUND,
         }
 
         for url, status_code in url_response_status_code.items():
@@ -50,19 +48,20 @@ class PostURLTests(TestCase):
     def test_post_create_url_exists_at_desired_location(self):
         """Страница /create/ доступна авторизованному пользователю."""
         response = self.authorized_client.get("/create/")
-        self.assertEqual(response.status_code, HTTPStatus.OK.value)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     # Проверяем доступность страницы редактирования автору
     def test_post_edit_url_exists_at_desired_location(self):
         """Страница /posts/<post_id>/edit/ доступна автору публикации."""
         response = self.authorized_client.get(f'/posts/{self.post.pk}/edit/')
-        self.assertEqual(response.status_code, HTTPStatus.OK.value)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
 
     # Проверка редиректов для неавторизованного пользователя
     def test_urls_redirect_anonymous_on_login(self):
         """Страница перенаправит анонимного пользователя на страницу логина."""
         url_redirect_to_url = {
-            '/auth/login/?next=/create/': '/create/',
+            f'{reverse("users:login")}?next={reverse("posts:post_create")}':
+            '/create/',
             f'/auth/login/?next=/posts/{self.post.pk}/edit/':
             f'/posts/{self.post.pk}/edit/',
         }

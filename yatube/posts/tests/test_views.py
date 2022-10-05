@@ -48,12 +48,18 @@ class PostPagesTests(TestCase):
 
     def test_index_page_show_correct_context(self):
         response = self.authorized_client.get(reverse('posts:index'))
+        self.assertIn('page_obj', response.context)
+        self.assertTrue(response.context['page_obj'][0])
+        self.assertIsNotNone('page_obj')
         self.assertEqual(response.context['page_obj'][0], self.post)
 
     def test_group_posts_page_show_correct_context(self):
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test-slug'})
         )
+        self.assertIn('group', response.context)
+        self.assertTrue(response.context['group'])
+        self.assertIsNotNone('group')
         self.assertEqual(response.context['group'], self.group)
 
     def test_profile_page_show_correct_context(self):
@@ -62,6 +68,9 @@ class PostPagesTests(TestCase):
                 'posts:profile', kwargs={'username': 'Ivan'}
             )
         )
+        self.assertIn('author', response.context)
+        self.assertTrue(response.context['author'])
+        self.assertIsNotNone('author')
         self.assertEqual(response.context['author'], self.user)
 
     def test_post_detail_page_show_correct_context(self):
@@ -70,6 +79,9 @@ class PostPagesTests(TestCase):
                 'posts:post_detail', kwargs={'post_id': f'{self.post.id}'}
             )
         )
+        self.assertIn('post', response.context)
+        self.assertTrue(response.context['post'])
+        self.assertIsNotNone(['post'])
         self.assertEqual(
             response.context['post'].id, PostPagesTests.post.id
         )
