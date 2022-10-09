@@ -129,7 +129,9 @@ class PostFormTests(TestCase):
         }
 
         response = self.authorized_client_noauthor.post(
-            reverse('posts:post_edit', kwargs={"post_id": self.post.pk}),
+            reverse(
+                'posts:post_edit', kwargs={"post_id": PostFormTests.post.pk}
+            ),
             data=form_data,
             follow=True
         )
@@ -137,5 +139,5 @@ class PostFormTests(TestCase):
         self.assertRedirects(
             response,
             f'{reverse("users:login")}?next='
-            f'{reverse("posts:post_detail", kwargs={"post_id": self.post.pk})}'
+            f'{reverse("posts:post_edit", kwargs={"post_id": self.post.pk})}'
         )

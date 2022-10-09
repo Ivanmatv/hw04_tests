@@ -1,6 +1,7 @@
 from django.test import Client, TestCase
 from django.urls import reverse
 from django import forms
+from django.core.paginator import Page
 
 from posts.models import Group, Post, User
 
@@ -49,9 +50,9 @@ class PostPagesTests(TestCase):
         response = self.authorized_client.get(reverse('posts:index'))
         self.assertIn('page_obj', response.context)
         self.assertTrue(response.context['page_obj'][0])
-        self.assertIsInstance(response.context['page_obj'], )
+        self.assertIsInstance(response.context['page_obj'], Page)
         self.assertEqual(response.context['page_obj'][0], self.post)
-        self.assertEqual(len(response.context['page_obj']), 10)
+        self.assertEqual(len(response.context['page_obj']), 1)
 
     def test_group_posts_page_show_correct_context(self):
         response = self.authorized_client.get(
@@ -59,7 +60,7 @@ class PostPagesTests(TestCase):
         )
         self.assertIn('group', response.context)
         self.assertTrue(response.context['group'])
-        self.assertIsInstance(response.context['group'], PostPagesTests)
+        self.assertIsInstance(response.context['group'], Group)
         self.assertEqual(response.context['group'], self.group)
 
     def test_profile_page_show_correct_context(self):

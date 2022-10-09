@@ -26,4 +26,4 @@ class PostModelTest(TestCase):
         )
         )
         post = PostModelTest.post
-        self.assertEqual(str(post), 'Тестовый пост')
+        self.assertEqual(str(post), 'Тестовый пост!')
