@@ -6,9 +6,10 @@ from django.contrib.auth.decorators import login_required
 from .forms import PostForm
 from .models import Post, Group, User
 
+NUM_PUB: int = 10
+
 
 def paginator(request, lists):
-    NUM_PUB: int = 10
     paginator = Paginator(lists, NUM_PUB)
     page_number = request.GET.get('page')
     return paginator.get_page(page_number)
@@ -37,7 +38,7 @@ def group_posts(request, slug):
 
 def profile(request, username):
     author = get_object_or_404(User, username=username)
-    user_posts = Post.objects.filter(author=author)
+    user_posts = author.posts.all()
     page_obj = paginator(request, user_posts)
     context = {
         'author': author,
@@ -49,14 +50,8 @@ def profile(request, username):
 
 def post_detail(request, post_id):
     post = get_object_or_404(Post, id=post_id)
-    author_post = post.author
-    post_count = Post.objects.filter(author=author_post).count()
-    title = f'Пост {post.text}'
     context = {
         'post': post,
-        'post_count': post_count,
-        'title': title,
-        'author_post': author_post,
     }
     return render(request, 'posts/post_detail.html', context)
 
@@ -78,7 +73,10 @@ def post_edit(request, post_id):
     form = PostForm(request.POST or None, instance=post)
     if request.user != post.author:
         return redirect('posts:post_detail', post_id=post.pk)
-    if form.is_valid():
-        form.save()
-        return redirect('posts:post_detail', post_id=post.pk)
-    return render(request, 'posts/create_post.html', {'form': form})
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect('posts:post_detail', post_id=post.pk)
+    return render(
+        request, 'posts/create_post.html', {'form': form, 'is_edit': True}
+    )

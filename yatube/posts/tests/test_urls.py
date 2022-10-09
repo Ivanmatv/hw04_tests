@@ -9,14 +9,14 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.user = User.objects.create_user(username='Ivan')
+        cls.user_author = User.objects.create_user(username='Ivan')
         cls.group = Group.objects.create(
             title="Тестовая группа",
             slug="test-slug",
             description="Тестовое описание",
         )
         cls.post = Post.objects.create(
-            author=cls.user,
+            author=cls.user_author,
             text='Тестовый пост',
         )
 
@@ -24,9 +24,11 @@ class PostURLTests(TestCase):
         # Создаем неавторизованный клиент
         self.guest_client = Client()
         # Создаем второй клиент
-        self.authorized_client = Client()
+        self.authorized_client_author = Client()
         # Авторизуем пользователя
-        self.authorized_client.force_login(self.user)
+        self.authorized_client_author.force_login(self.user_author)
+        # Создаём третий клиент
+        self.authorized_client = Client()
 
     # Проверка доступа к общедоступным страницам
     def test_urls_exist_at_desired_locations(self):
@@ -47,13 +49,26 @@ class PostURLTests(TestCase):
     # Проверяем доступность страниц для авторизованного пользователя
     def test_post_create_url_exists_at_desired_location(self):
         """Страница /create/ доступна авторизованному пользователю."""
-        response = self.authorized_client.get("/create/")
+        response = self.authorized_client_author.get(
+            reverse('posts:post_create')
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
+
+    def test_post_create_correct_template(self):
+        templates_pages_names = {
+            reverse('posts:post_create'): 'posts/create_post.html',
+        }
+        for reverse_name, template in templates_pages_names.items():
+            with self.subTest(reverse_name=reverse_name):
+                response = self.authorized_client_author.get(reverse_name)
+                self.assertTemplateUsed(response, template)
 
     # Проверяем доступность страницы редактирования автору
     def test_post_edit_url_exists_at_desired_location(self):
         """Страница /posts/<post_id>/edit/ доступна автору публикации."""
-        response = self.authorized_client.get(f'/posts/{self.post.pk}/edit/')
+        response = self.authorized_client_author.get(
+            reverse("posts:post_edit", kwargs={"post_id": self.post.pk})
+        )
         self.assertEqual(response.status_code, HTTPStatus.OK)
 
     # Проверка редиректов для неавторизованного пользователя
@@ -62,13 +77,21 @@ class PostURLTests(TestCase):
         url_redirect_to_url = {
             f'{reverse("users:login")}?next={reverse("posts:post_create")}':
             '/create/',
-            f'/auth/login/?next=/posts/{self.post.pk}/edit/':
+            f'{reverse("users:login")}?next='
+            f'{reverse("posts:post_edit", kwargs={"post_id": self.post.pk})}':
             f'/posts/{self.post.pk}/edit/',
         }
         for redirect, url in url_redirect_to_url.items():
             with self.subTest(url=url):
                 response = self.guest_client.get(url, follow=True)
                 self.assertRedirects(response, redirect)
+
+    # Проверка авторизованного пользователя, но не автора поста
+    def test_urls_redirect_another_authorized_client_(self):
+        """Страница перенаправит авторизованнного пользователя,"""
+        """но не автора поста"""
+        response = self.authorized_client.get(f'/posts/{self.post.pk}/edit/')
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
 
     # Проверка вызываемых шаблонов для каждого адреса
     def test_urls_uses_correct_template(self):
@@ -83,5 +106,5 @@ class PostURLTests(TestCase):
         }
         for url, template in templates_url_names.items():
             with self.subTest(url=url):
-                response = self.authorized_client.get(url)
+                response = self.authorized_client_author.get(url)
                 self.assertTemplateUsed(response, template)

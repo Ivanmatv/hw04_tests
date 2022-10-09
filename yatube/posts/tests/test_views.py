@@ -19,7 +19,6 @@ class PostPagesTests(TestCase):
             author=cls.user,
             text='Тестовый пост',
             group=cls.group,
-            id=30,
         )
 
     def setUp(self):
@@ -50,8 +49,9 @@ class PostPagesTests(TestCase):
         response = self.authorized_client.get(reverse('posts:index'))
         self.assertIn('page_obj', response.context)
         self.assertTrue(response.context['page_obj'][0])
-        self.assertIsNotNone('page_obj')
+        self.assertIsInstance(response.context['page_obj'], )
         self.assertEqual(response.context['page_obj'][0], self.post)
+        self.assertEqual(len(response.context['page_obj']), 10)
 
     def test_group_posts_page_show_correct_context(self):
         response = self.authorized_client.get(
@@ -59,7 +59,7 @@ class PostPagesTests(TestCase):
         )
         self.assertIn('group', response.context)
         self.assertTrue(response.context['group'])
-        self.assertIsNotNone('group')
+        self.assertIsInstance(response.context['group'], PostPagesTests)
         self.assertEqual(response.context['group'], self.group)
 
     def test_profile_page_show_correct_context(self):
@@ -111,13 +111,17 @@ class PostPagesTests(TestCase):
                 self.assertIsInstance(form_field, expected)
 
     def test_paginator(self):
-        for post in range(11):
+        RANGE: int = 11
+        RANGE_FIRST_PG: int = 10
+        RANGE_SECOND_PG: int = 2
+        for post in range(RANGE):
             post = Post.objects.create(
                 text=f'Тестовый текст {post}',
                 author=self.user,
                 group=self.group,
             )
-        posturls_posts_page = [('', 10), ('?page=2', 2)]
+        posturls_posts_page = [('', RANGE_FIRST_PG),
+                               ('?page=2', RANGE_SECOND_PG)]
         templates = [
             reverse('posts:index'),
             reverse('posts:group_list', kwargs={'slug': 'test-slug'}),
