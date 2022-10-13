@@ -35,9 +35,9 @@ class PostPagesTests(TestCase):
             reverse('posts:profile', kwargs={'username': 'Ivan'}):
             'posts/profile.html',
             reverse('posts:post_detail',
-                    kwargs={'post_id': f'{self.post.id}'}):
+                    kwargs={'post_id': self.post.id}):
             'posts/post_detail.html',
-            reverse('posts:post_edit', kwargs={'post_id': f'{self.post.id}'}):
+            reverse('posts:post_edit', kwargs={'post_id': self.post.id}):
             'posts/create_post.html',
             reverse('posts:post_create'): 'posts/create_post.html',
         }
@@ -48,18 +48,16 @@ class PostPagesTests(TestCase):
 
     def test_index_page_show_correct_context(self):
         response = self.authorized_client.get(reverse('posts:index'))
-        self.assertIn('page_obj', response.context)
-        self.assertTrue(response.context['page_obj'][0])
+        self.assertIn(self.post.group.id, response.context)
         self.assertIsInstance(response.context['page_obj'], Page)
-        self.assertEqual(response.context['page_obj'][0], self.post)
         self.assertEqual(len(response.context['page_obj']), 1)
+        self.assertEqual(response.context['page_obj'][0], self.post)
 
     def test_group_posts_page_show_correct_context(self):
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test-slug'})
         )
-        self.assertIn('group', response.context)
-        self.assertTrue(response.context['group'])
+        self.assertIn(self.post.group.id, response.context)
         self.assertIsInstance(response.context['group'], Group)
         self.assertEqual(response.context['group'], self.group)
 
@@ -69,20 +67,16 @@ class PostPagesTests(TestCase):
                 'posts:profile', kwargs={'username': 'Ivan'}
             )
         )
-        self.assertIn('author', response.context)
-        self.assertTrue(response.context['author'])
-        self.assertIsNotNone('author')
+        self.assertIn(self.post.group.id, response.context)
         self.assertEqual(response.context['author'], self.user)
 
     def test_post_detail_page_show_correct_context(self):
         response = self.authorized_client.get(
             reverse(
-                'posts:post_detail', kwargs={'post_id': f'{self.post.id}'}
+                'posts:post_detail', kwargs={'post_id': self.post.id}
             )
         )
         self.assertIn('post', response.context)
-        self.assertTrue(response.context['post'])
-        self.assertIsNotNone(['post'])
         self.assertEqual(
             response.context['post'].id, PostPagesTests.post.id
         )

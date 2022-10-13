@@ -10,6 +10,7 @@ class PostFormTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user = User.objects.create_user(username='Ivan')
+        cls.user_noauthor = User.objects.create_user(username='Igor')
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test-slug',
@@ -27,14 +28,15 @@ class PostFormTests(TestCase):
         # Создаем второй клиент
         self.authorized_client = Client()
         # Авторизуем пользователя
-        self.authorized_client.force_login(PostFormTests.user)
+        self.authorized_client.force_login(self.user)
         # Создаём третий клиент
         self.authorized_client_noauthor = Client()
+        # Авторизуем не автора постов
+        self.authorized_client_noauthor.force_login(self.user_noauthor)
 
     def test_create_post(self):
         post_create = Post.objects.count()
         form_data = {
-            'author': self.user,
             'text': 'Тестовый текст',
             'group': self.group.id,
         }
@@ -54,26 +56,21 @@ class PostFormTests(TestCase):
         )
         self.assertEqual(created_post.text, form_data['text'])
         self.assertEqual(created_post.group_id, form_data['group'])
-        self.assertEqual(created_post.author, form_data['author'])
 
     def test_guest_create_post(self):
-
+        post_create = Post.objects.count()
         form_data = {
-            'text': 'Текст от анонима',
+            'text': 'Текст от гостя',
             'group': self.group.id,
-            'author': self.user,
         }
 
-        response = self.guest_client.post(
+        self.guest_client.post(
             reverse('posts:post_create'),
             data=form_data,
             follow=True
         )
 
-        self.assertRedirects(
-            response,
-            f'{reverse("users:login")}?next={reverse("posts:post_create")}'
-        )
+        self.assertEqual(Post.objects.count(), post_create)
 
     def test_post_edit_form(self):
         group_2 = Group.objects.create(
@@ -85,7 +82,6 @@ class PostFormTests(TestCase):
         form_data = {
             'text': 'Пост изменён',
             'group': group_2.id,
-            'author': self.user,
         }
         response = self.authorized_client.post(reverse(
             'posts:post_edit', kwargs={'post_id': PostFormTests.post.pk}),
@@ -100,44 +96,46 @@ class PostFormTests(TestCase):
         self.assertEqual(Post.objects.count(), post_create)
         self.assertEqual(edited_post.text, form_data['text'])
         self.assertEqual(edited_post.group_id, form_data['group'])
-        self.assertEqual(edited_post.author, form_data['author'])
 
     def test_guest_post_edit(self):
+        group_2 = Group.objects.create(
+            title='Тестовая группа 2',
+            slug='test-slug2',
+            description='Тестовое описание 2'
+        )
 
         form_data = {
             'text': 'Текст от анонима',
-            'group': self.group.id,
+            'group': group_2.id,
         }
 
-        response = self.guest_client.post(
+        self.guest_client.post(
             reverse('posts:post_edit', kwargs={"post_id": self.post.pk}),
             data=form_data,
             follow=True
         )
 
-        self.assertRedirects(
-            response,
-            f'{reverse("users:login")}?next='
-            f'{reverse("posts:post_edit", kwargs={"post_id": self.post.pk})}'
-        )
+        self.assertNotEqual(self.post.text, form_data['text'])
+        self.assertNotEqual(self.post.group, form_data['group'])
 
     def test_authorized_client_noauthor_post_edit(self):
-
+        group_2 = Group.objects.create(
+            title='Тестовая группа 2',
+            slug='test-slug2',
+            description='Тестовое описание 2'
+        )
         form_data = {
             'text': 'Текст от не автора',
-            'group': self.group.id,
+            'group': group_2.id,
         }
 
-        response = self.authorized_client_noauthor.post(
+        self.authorized_client_noauthor.post(
             reverse(
-                'posts:post_edit', kwargs={"post_id": PostFormTests.post.pk}
+                'posts:post_edit', kwargs={"post_id": self.post.pk}
             ),
             data=form_data,
             follow=True
         )
 
-        self.assertRedirects(
-            response,
-            f'{reverse("users:login")}?next='
-            f'{reverse("posts:post_edit", kwargs={"post_id": self.post.pk})}'
-        )
+        self.assertNotEqual(self.post.text, form_data['text'])
+        self.assertNotEqual(self.post.group, form_data['group'])

@@ -22,6 +22,7 @@ class Group(models.Model):
         return self.title
 
     class Meta:
+        verbose_name = 'Группа пользователей'
         verbose_name_plural = 'Группы пользователя'
 
 
@@ -51,6 +52,7 @@ class Post(models.Model):
     )
 
     class Meta:
+        verbose_name = 'Пост пользователя'
         verbose_name_plural = 'Посты пользователя'
         ordering = ('-pub_date',)
 

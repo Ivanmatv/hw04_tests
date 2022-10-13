@@ -30,11 +30,13 @@
                 все посты пользователя
               </a>
             </li>
+            {% if request.user.is_authenticated %}
             <li class="list-group-item">
               <a href="{% url 'posts:post_edit' post.pk %}">
                 Редактровать запись
               </a>
             </li>
+            {% endif%}
           </ul>
         </aside>
         <article class="col-12 col-md-9">

@@ -33,10 +33,10 @@
         <li class="nav-item"> 
           <a class="nav-link link-light" href="{% url 'users:login' %}">Войти</a>
         </li>
+        {% endif %}
         <li class="nav-item"> 
           <a class="nav-link link-light" href="{% url 'users:signup' %}">Регистрация</a>
         </li>
-        {% endif %}
       </ul>
       {% endwith %}
     </div>

@@ -10,6 +10,7 @@ class PostURLTests(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.user_author = User.objects.create_user(username='Ivan')
+        cls.user = User.objects.create_user(username='Igor')
         cls.group = Group.objects.create(
             title="Тестовая группа",
             slug="test-slug",
@@ -29,6 +30,8 @@ class PostURLTests(TestCase):
         self.authorized_client_author.force_login(self.user_author)
         # Создаём третий клиент
         self.authorized_client = Client()
+        # Авторизуем второго пользователя
+        self.authorized_client.force_login(self.user)
 
     # Проверка доступа к общедоступным страницам
     def test_urls_exist_at_desired_locations(self):
