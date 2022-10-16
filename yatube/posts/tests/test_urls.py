@@ -95,7 +95,7 @@ class PostURLTests(TestCase):
         """но не автора поста"""
         response = self.authorized_client.get(
             reverse("posts:post_edit", kwargs={"post_id": self.post.pk})
-            )
+        )
         self.assertRedirects(response, f'/posts/{self.post.pk}/')
 
     # Проверка вызываемых шаблонов для каждого адреса
