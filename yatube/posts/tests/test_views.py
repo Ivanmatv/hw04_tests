@@ -59,6 +59,9 @@ class PostPagesTests(TestCase):
         )
         self.assertIsInstance(response.context['group'], Group)
         self.assertEqual(response.context['group'], self.group)
+        self.assertIsInstance(response.context['page_obj'], Page)
+        self.assertEqual(len(response.context['page_obj']), 1)
+        self.assertEqual(response.context['page_obj'][0], self.post)
         self.assertIn(self.post, response.context['page_obj'])
 
     def test_profile_page_show_correct_context(self):
@@ -68,6 +71,9 @@ class PostPagesTests(TestCase):
             )
         )
         self.assertEqual(response.context['author'], self.user)
+        self.assertIsInstance(response.context['page_obj'], Page)
+        self.assertEqual(len(response.context['page_obj']), 1)
+        self.assertEqual(response.context['page_obj'][0], self.post)
         self.assertIn(self.post, response.context['page_obj'])
 
     def test_post_detail_page_show_correct_context(self):
