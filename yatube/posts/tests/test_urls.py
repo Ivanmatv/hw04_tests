@@ -93,12 +93,10 @@ class PostURLTests(TestCase):
     def test_urls_redirect_another_authorized_client_(self):
         """Страница перенаправит авторизованнного пользователя,"""
         """но не автора поста"""
-        response = self.authorized_client.get(f'/posts/{self.post.pk}/edit/')
-        self.assertRedirects(response, f"""
-                             {reverse('posts:post_detail',
-                             kwargs={'post_id': self.post.pk})}
-                             """
-                             )
+        response = self.authorized_client.get(
+            reverse("posts:post_edit", kwargs={"post_id": self.post.pk})
+            )
+        self.assertRedirects(response, f'/posts/{self.post.pk}/')
 
     # Проверка вызываемых шаблонов для каждого адреса
     def test_urls_uses_correct_template(self):
