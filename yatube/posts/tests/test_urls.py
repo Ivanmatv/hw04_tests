@@ -94,7 +94,11 @@ class PostURLTests(TestCase):
         """Страница перенаправит авторизованнного пользователя,"""
         """но не автора поста"""
         response = self.authorized_client.get(f'/posts/{self.post.pk}/edit/')
-        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertRedirects(response, f"""
+                             {reverse('posts:post_detail',
+                             kwargs={'post_id': self.post.pk})}
+                             """
+                             )
 
     # Проверка вызываемых шаблонов для каждого адреса
     def test_urls_uses_correct_template(self):

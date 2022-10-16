@@ -15,7 +15,7 @@ class PostModelTest(TestCase):
         )
         cls.post = Post.objects.create(
             author=cls.user,
-            text='Тестовый пост !',
+            text='Тестовый пост модели',
         )
 
     def test_models_have_correct_object_names(self):
@@ -26,4 +26,4 @@ class PostModelTest(TestCase):
         )
         )
         post = PostModelTest.post
-        self.assertEqual(str(post), self.post.text)
+        self.assertEqual(str(post), self.post.text[:15])

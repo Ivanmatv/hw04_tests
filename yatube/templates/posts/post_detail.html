@@ -31,11 +31,13 @@
               </a>
             </li>
             {% if request.user.is_authenticated %}
+              {% if is_edit %}
             <li class="list-group-item">
               <a href="{% url 'posts:post_edit' post.pk %}">
                 Редактровать запись
               </a>
             </li>
+              {% endif%}
             {% endif%}
           </ul>
         </aside>

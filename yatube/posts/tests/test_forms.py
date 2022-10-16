@@ -56,6 +56,7 @@ class PostFormTests(TestCase):
         )
         self.assertEqual(created_post.text, form_data['text'])
         self.assertEqual(created_post.group_id, form_data['group'])
+        self.assertEqual(created_post.author, self.user)
 
     def test_guest_create_post(self):
         post_create = Post.objects.count()
@@ -96,6 +97,7 @@ class PostFormTests(TestCase):
         self.assertEqual(Post.objects.count(), post_create)
         self.assertEqual(edited_post.text, form_data['text'])
         self.assertEqual(edited_post.group_id, form_data['group'])
+        self.assertEqual(edited_post.author, self.user)
 
     def test_guest_post_edit(self):
         group_2 = Group.objects.create(
@@ -114,9 +116,11 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True
         )
+        edited_post = Post.objects.latest('pk')
 
-        self.assertNotEqual(self.post.text, form_data['text'])
-        self.assertNotEqual(self.post.group, form_data['group'])
+        self.assertEqual(self.post.text, edited_post.text)
+        self.assertEqual(self.post.group, edited_post.group)
+        self.assertEqual(edited_post.author, self.user)
 
     def test_authorized_client_noauthor_post_edit(self):
         group_2 = Group.objects.create(
@@ -136,6 +140,8 @@ class PostFormTests(TestCase):
             data=form_data,
             follow=True
         )
+        edited_post = Post.objects.latest('pk')
 
-        self.assertNotEqual(self.post.text, form_data['text'])
-        self.assertNotEqual(self.post.group, form_data['group'])
+        self.assertEqual(self.post.text, edited_post.text)
+        self.assertEqual(self.post.group, edited_post.group)
+        self.assertEqual(edited_post.author, self.user)
