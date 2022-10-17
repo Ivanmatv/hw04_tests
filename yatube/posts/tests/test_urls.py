@@ -70,7 +70,7 @@ class PostURLTests(TestCase):
     def test_post_edit_url_exists_at_desired_location(self):
         """Страница /posts/<post_id>/edit/ доступна автору публикации."""
         response = self.authorized_client_author.get(
-            reverse("posts:post_edit", kwargs={"post_id": self.post.pk})
+            reverse("posts:post_edit", kwargs={"post_id": self.post.id})
         )
         self.assertEqual(response.status_code, HTTPStatus.OK)
 

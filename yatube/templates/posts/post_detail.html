@@ -20,7 +20,7 @@
               {% endif %}
             </li>
             <li class="list-group-item">
-              Автор: {{author_post }}
+              Автор: {{ post.author.get_full_name }}
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center">
               Всего постов автора:<span>{{ post_count }}</span>
@@ -30,14 +30,12 @@
                 все посты пользователя
               </a>
             </li>
-            {% if request.user.is_authenticated %}
-              {% if is_edit %}
+            {% if request.user == post.author.is_authenticated %}
             <li class="list-group-item">
               <a href="{% url 'posts:post_edit' post.pk %}">
                 Редактровать запись
               </a>
             </li>
-              {% endif%}
             {% endif%}
           </ul>
         </aside>
