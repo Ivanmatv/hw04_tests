@@ -118,7 +118,7 @@ class PostFormTests(TestCase):
         )
         edited_post = Post.objects.latest('pk')
 
-        self.assertEqual(edited_post.author, self.post.author)
+        self.assertEqual(self.post.author, edited_post.author)
         self.assertEqual(self.post.text, edited_post.text)
         self.assertEqual(self.post.group, edited_post.group)
 
@@ -142,6 +142,6 @@ class PostFormTests(TestCase):
         )
         edited_post = Post.objects.latest('pk')
 
-        self.assertEqual(edited_post.author, self.post.author)
+        self.assertEqual(self.post.author, edited_post.author)
         self.assertEqual(self.post.text, edited_post.text)
         self.assertEqual(self.post.group, edited_post.group)
