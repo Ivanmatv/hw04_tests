@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load thumbnail %}
+
 {% block title %}
   {% if is_edit %}
     Редактировать запись
@@ -34,7 +36,7 @@
             </div>
           {% endfor %}
         {% endif %}
-        <form method="Post" action="{% url 'posts:post_create' %}">
+        <form method="Post" action="{% url 'posts:post_create' %}" enctype="multipart/form-data">
         {% csrf_token %}
           {% for field in form %} 
             <div class="form-group row my-3">
