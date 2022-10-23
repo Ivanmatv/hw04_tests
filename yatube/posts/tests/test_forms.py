@@ -19,6 +19,19 @@ class PostFormTests(TestCase):
         super().setUpClass()
         cls.user = User.objects.create_user(username='Ivan')
         cls.user_noauthor = User.objects.create_user(username='Igor')
+        cls.small_gif = (
+             b'\x47\x49\x46\x38\x39\x61\x02\x00'
+             b'\x01\x00\x80\x00\x00\x00\x00\x00'
+             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
+             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
+             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
+             b'\x0A\x00\x3B'
+        )
+        cls.uploaded = SimpleUploadedFile(
+            name='small.gif',
+            content=small_gif,
+            content_type='image/gif'
+        )
         cls.group = Group.objects.create(
             title='Тестовая группа',
             slug='test-slug',
@@ -28,7 +41,9 @@ class PostFormTests(TestCase):
             author=cls.user,
             text='Тестовый текст',
             group=cls.group,
+            image=cls.uploaded,
         )
+
 
     @classmethod
     def tearDownClass(cls):
@@ -49,23 +64,10 @@ class PostFormTests(TestCase):
 
     def test_create_post(self):
         post_create = Post.objects.count()
-        small_gif = (
-             b'\x47\x49\x46\x38\x39\x61\x02\x00'
-             b'\x01\x00\x80\x00\x00\x00\x00\x00'
-             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-             b'\x0A\x00\x3B'
-        )
-        uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=small_gif,
-            content_type='image/gif'
-        )
         form_data = {
             'text': 'Тестовый текст',
             'group': self.group.id,
-            'image': uploaded,
+            'image': self.uploaded,
         }
 
         response = self.authorized_client.post(
@@ -84,27 +86,14 @@ class PostFormTests(TestCase):
         self.assertEqual(created_post.author, self.post.author)
         self.assertEqual(created_post.text, form_data['text'])
         self.assertEqual(created_post.group_id, form_data['group'])
-        self.assertEqual(created_post.image, form_data['image'])
+        self.assertEqual()
 
     def test_guest_create_post(self):
         post_create = Post.objects.count()
-        small_gif = (
-             b'\x47\x49\x46\x38\x39\x61\x02\x00'
-             b'\x01\x00\x80\x00\x00\x00\x00\x00'
-             b'\xFF\xFF\xFF\x21\xF9\x04\x00\x00'
-             b'\x00\x00\x00\x2C\x00\x00\x00\x00'
-             b'\x02\x00\x01\x00\x00\x02\x02\x0C'
-             b'\x0A\x00\x3B'
-        )
-        uploaded = SimpleUploadedFile(
-            name='small.gif',
-            content=small_gif,
-            content_type='image/gif'
-        )
         form_data = {
             'text': 'Текст от гостя',
             'group': self.group.id,
-            'image': uploaded,
+            'image': self.uploaded,
         }
 
         self.guest_client.post(
@@ -125,6 +114,7 @@ class PostFormTests(TestCase):
         form_data = {
             'text': 'Пост изменён',
             'group': group_2.id,
+            'image': self.uploaded,
         }
         response = self.authorized_client.post(reverse(
             'posts:post_edit', kwargs={'post_id': self.post.id}),
@@ -140,6 +130,11 @@ class PostFormTests(TestCase):
         self.assertEqual(edited_post.author, self.post.author)
         self.assertEqual(edited_post.text, form_data['text'])
         self.assertEqual(edited_post.group_id, form_data['group'])
+        self.assertTrue(
+            Post.objects.filter(
+                image='small.gif'
+            ).exists()
+        ) 
 
     def test_guest_post_edit(self):
         group_2 = Group.objects.create(
@@ -151,6 +146,7 @@ class PostFormTests(TestCase):
         form_data = {
             'text': 'Текст от анонима',
             'group': group_2.id,
+            'image': self.uploaded,
         }
 
         self.guest_client.post(
@@ -173,6 +169,7 @@ class PostFormTests(TestCase):
         form_data = {
             'text': 'Текст от не автора',
             'group': group_2.id,
+            'image': self.uploaded,
         }
 
         self.authorized_client_noauthor.post(

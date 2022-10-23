@@ -7,8 +7,9 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django import forms
 from django.core.paginator import Page
+from django.core.cache import cache
 
-from posts.models import Group, Post, User
+from posts.models import Group, Post, User, Comment
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
 
@@ -45,6 +46,11 @@ class PostPagesTests(TestCase):
             group=cls.group,
             image=cls.uploaded
         )
+        # cls.comment = Comment.objects.create(
+        #     author=cls.user,
+        #     post=cls.post,
+        #     text='Комментарий'
+        # )
 
     @classmethod
     def tearDownClass(cls):
@@ -52,7 +58,11 @@ class PostPagesTests(TestCase):
         shutil.rmtree(TEMP_MEDIA_ROOT, ignore_errors=True)
 
     def setUp(self):
+        # Создаём гостя
+        self.guest_client = Client()
+        # создаём клиента
         self.authorized_client = Client()
+        # Авторизуем клиента
         self.authorized_client.force_login(self.user)
 
     def test_pages_uses_correct_template(self):
@@ -76,6 +86,7 @@ class PostPagesTests(TestCase):
                 self.assertTemplateUsed(response, template)
 
     def test_index_page_show_correct_context(self):
+        """Проверка контекста главной страницы"""
         response = self.authorized_client.get(reverse('posts:index'))
         self.assertIn('page_obj', response.context)
         self.assertIsInstance(response.context['page_obj'], Page)
@@ -83,6 +94,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(response.context['page_obj'][0], self.post)
 
     def test_group_posts_page_show_correct_context(self):
+        """Проверка контекста группы"""
         response = self.authorized_client.get(
             reverse('posts:group_list', kwargs={'slug': 'test-slug'})
         )
@@ -95,6 +107,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(response.context['page_obj'][0], self.post)
 
     def test_profile_page_show_correct_context(self):
+        """Проверка контекста автора"""
         response = self.authorized_client.get(
             reverse(
                 'posts:profile', kwargs={'username': 'Ivan'}
@@ -108,6 +121,7 @@ class PostPagesTests(TestCase):
         self.assertEqual(response.context['page_obj'][0], self.post)
 
     def test_post_detail_page_show_correct_context(self):
+        """Проверка контекста поста"""
         response = self.authorized_client.get(
             reverse(
                 'posts:post_detail', kwargs={'post_id': self.post.id}
@@ -119,11 +133,13 @@ class PostPagesTests(TestCase):
         )
 
     def test_post_edit_show_correct_context(self):
+        """Проверка редактирования контекста поста"""
         response = self.authorized_client.get(
-            reverse('posts:post_edit', kwargs={'post_id': f'{self.post.id}'}))
+            reverse('posts:post_edit', kwargs={'post_id': self.post.id}))
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
+            'image': forms.fields.ImageField,
         }
         for value, expected in form_fields.items():
             with self.subTest(value=value):
@@ -131,16 +147,44 @@ class PostPagesTests(TestCase):
                 self.assertIsInstance(form_field, expected)
 
     def test_create_post_show_correct_context(self):
+        """Проверка создания контекста нового поста"""
         response = self.authorized_client.get(
             reverse('posts:post_create'))
         form_fields = {
             'text': forms.fields.CharField,
             'group': forms.fields.ChoiceField,
+            'image': forms.fields.ImageField,
         }
         for value, expected in form_fields.items():
             with self.subTest(value=value):
                 form_field = response.context['form'].fields[value]
                 self.assertIsInstance(form_field, expected)
+
+    def test_add_comment_show_correct_context(self):
+        """Проверка добавления комментария"""
+        post = Post.objects.first()
+        comment = Comment.objects.create(
+            text='Новый комментарий',
+            post=post,
+            author=self.user,
+        )
+        response = self.guest_client.get(reverse(
+            'posts:post_detail', kwargs={'post_id': post.id})
+        )
+        comment_response = response.context['comments'].first()
+        self.assertEqual(comment_response.text, comment.text)
+        self.assertEqual(comment_response.author, comment.author)
+
+    def test_cache_index(self):
+        """Проверка хранения и очищения кэша для index."""
+        cache.clear()
+        response = self.authorized_client.get(reverse('posts:index'))
+        cache_check = response.content
+        post = Post.objects.get(id=1)
+        post.delete()
+        cache.clear()
+        response = self.authorized_client.get(reverse('posts:index'))
+        self.assertNotEqual(response.content, cache_check)
 
     def test_paginator(self):
         RANGE: int = 11
